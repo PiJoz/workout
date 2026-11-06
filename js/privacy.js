@@ -38,5 +38,5 @@ nowego planu treningowego.</p>
 <h3>Zmiany</h3>
 <p>Zmiany tej polityki pojawią się w aplikacji razem z datą poniżej.</p>
 <h3>Kontakt</h3>
-<p>Pytania i zgłoszenia: github.com/PiJoz/workout-app/issues.</p>
+<p>Pytania i zgłoszenia: github.com/PiJoz/workout/issues.</p>
 `;
