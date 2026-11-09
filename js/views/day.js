@@ -23,7 +23,6 @@ export function renderDay() {
       </label>
       <button class="icon" data-action="next-day" aria-label="Następny dzień">›</button>
     </header>
-    ${isToday ? '' : '<button class="link center" data-action="today">Wróć do dzisiaj</button>'}
     ${cats.length ? `<div class="chips">${cats.map((c) => `<span class="chip">${catDot(c)}${h(categoryById(c).name)}</span>`).join('')}</div>` : ''}
     <section class="entries">
       ${entries.length ? entries.map(entryCard).join('') : `
@@ -34,7 +33,8 @@ export function renderDay() {
     </section>
     ${entries.length > 1 ? '<p class="muted small center">Przytrzymaj ćwiczenie, żeby przesunąć je w górę lub w dół.</p>' : ''}
     <button class="primary block" data-action="add">+ Dodaj ćwiczenie</button>
-    <button class="secondary block" data-action="copy-from-cal">Kopiuj z kalendarza</button>`;
+    <button class="secondary block" data-action="copy-from-cal">Kopiuj z kalendarza</button>
+    ${entries.length ? '<button class="secondary block" data-action="export-day">Eksportuj trening</button>' : ''}`;
 
   $('#date-picker').addEventListener('change', (ev) => {
     if (ev.target.value) {

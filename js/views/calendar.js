@@ -3,10 +3,9 @@
 import { CATEGORIES, categoryById } from '../data.js';
 import { bestSet } from '../stats.js';
 import * as store from '../store.js';
-import { formatExerciseList, formatWorkouts } from '../txt.js';
 import { dateKey, escapeHtml as h, FORMS, longDate, MONTHS, plural, shortDate, todayKey, WEEKDAYS_SHORT } from '../util.js';
 import { catDot, closeSheet, formatSet, go, openSheet, render, sheetEl, sheetHeader, toast, ui, viewEl } from '../ui/core.js';
-import { shareFile } from '../ui/files.js';
+import { exportDaySheet } from '../ui/files.js';
 import { templateNameForm } from '../views/templates.js';
 
 // Siatka miesiąca - wspólna dla zakładki Kalendarz i okna "Kopiuj z kalendarza".
@@ -131,13 +130,6 @@ export function dayActions(date) {
         <button class="secondary block" data-action="dm-template">Zapisz jako gotowy trening</button>
         <button class="secondary block" data-action="dm-move">Przenieś na inny dzień</button>
         <button class="danger block" data-action="dm-delete">Usuń trening</button>`;
-    } else if (st.view === 'export') {
-      body.innerHTML = `${sheetHeader('Eksportuj trening', 'dm-menu')}
-        <p class="muted center">${h(longDate(date))} · ${summary}</p>
-        <button class="primary block" data-action="dm-export-full">Z wynikami (serie, ciężary)</button>
-        <button class="secondary block" data-action="dm-export-list">Tylko lista ćwiczeń</button>
-        <p class="muted small">Plik z wynikami da się wczytać z powrotem (Ustawienia → Wczytaj trening).
-          Sama lista to plan do wysłania komuś - bez serii.</p>`;
     } else if (st.view === 'delete') {
       body.innerHTML = `${sheetHeader('Usunąć trening?', 'dm-menu')}
         <p>Trening z <strong>${h(longDate(date))}</strong> (${summary}) zostanie usunięty.</p>
@@ -163,12 +155,10 @@ export function dayActions(date) {
     const a = btn.dataset.action;
     if (a === 'dm-template') {
       templateNameForm({ date });
-    } else if (a === 'dm-export-full') {
-      shareFile(formatWorkouts(store.exportDays([date])), `trening-${date}.txt`);
-    } else if (a === 'dm-export-list') {
-      shareFile(formatExerciseList(store.exportDays([date])), `cwiczenia-${date}.txt`, 'text/plain', 'Lista ćwiczeń');
-    } else if (a === 'dm-menu' || a === 'dm-delete' || a === 'dm-move' || a === 'dm-export') {
-      st.view = { 'dm-menu': 'menu', 'dm-delete': 'delete', 'dm-move': 'move', 'dm-export': 'export' }[a];
+    } else if (a === 'dm-export') {
+      exportDaySheet(date, () => dayActions(date)); // ten sam eksport co z ekranu dnia; "wstecz" - to menu
+    } else if (a === 'dm-menu' || a === 'dm-delete' || a === 'dm-move') {
+      st.view = { 'dm-menu': 'menu', 'dm-delete': 'delete', 'dm-move': 'move' }[a];
       draw();
     } else if (a === 'dm-prev' || a === 'dm-next') {
       st.month = shiftMonth(st.month, a === 'dm-next' ? 1 : -1);

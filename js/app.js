@@ -7,7 +7,7 @@ import * as store from './store.js';
 import { formatWorkouts } from './txt.js';
 import { addDays, todayKey } from './util.js';
 import { $, applyTheme, closeSheet, go, registerViews, render, sheetEl, toast, ui, units } from './ui/core.js';
-import { onFileChosen, shareFile, startImport } from './ui/files.js';
+import { exportDaySheet, onFileChosen, shareFile, startImport } from './ui/files.js';
 import { copyFromCalendar, renderCalendar, shiftMonth } from './views/calendar.js';
 import { editEntry, pickCategory, pickExercise, renderDay } from './views/day.js';
 import { customForm, pickType, renderExercises } from './views/exercises.js';
@@ -29,7 +29,6 @@ document.addEventListener('click', (ev) => {
   switch (action) {
     case 'prev-day': ui.date = addDays(ui.date, -1); return render();
     case 'next-day': ui.date = addDays(ui.date, 1); return render();
-    case 'today': ui.date = todayKey(); return render();
     case 'add': return pickCategory();
     case 'pick-cat': return pickExercise(btn.dataset.cat);
     case 'tpl-pick': return pickTemplate();
@@ -66,6 +65,7 @@ document.addEventListener('click', (ev) => {
       ui.calSel = null; // nowy miesiąc: podgląd ostatniego treningu w nim
       return render();
     case 'copy-from-cal': return copyFromCalendar();
+    case 'export-day': return exportDaySheet(ui.date);
     case 'guide': return showGuide(store.getExercise(btn.dataset.id));
     case 'this-month': ui.month = todayKey().slice(0, 7); ui.calSel = null; return render();
     case 'cal-day':

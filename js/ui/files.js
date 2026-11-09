@@ -2,7 +2,7 @@
 
 import { categoryById, TYPES } from '../data.js';
 import * as store from '../store.js';
-import { parseWorkouts } from '../txt.js';
+import { formatExerciseList, formatWorkouts, parseWorkouts } from '../txt.js';
 import { escapeHtml as h, FORMS, longDate, plural, shortDate } from '../util.js';
 import { $, catDot, closeSheet, go, openSheet, render, sheetEl, sheetHeader, toast, ui } from '../ui/core.js';
 
@@ -71,6 +71,25 @@ export function saveBinary(bytes, filename) {
   let bin = '';
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return Boolean(native.saveBase64?.(filename, 'application/octet-stream', btoa(bin)));
+}
+
+// Eksport jednego dnia: z wynikami (.txt, da się wczytać) albo sama lista ćwiczeń. Z ekranu dnia
+// i z menu przytrzymanego dnia w kalendarzu (onBack: powrót do tego menu).
+export function exportDaySheet(date, onBack = null) {
+  const entries = store.getDay(date);
+  const sets = entries.reduce((n, e) => n + e.sets.length, 0);
+  openSheet(`${sheetHeader('Eksportuj trening', onBack ? 'ex-back' : null)}
+    <p class="muted center">${h(longDate(date))} · ${plural(entries.length, FORMS.exercise)} · ${plural(sets, FORMS.set)}</p>
+    <button class="primary block" data-action="ex-full">Z wynikami (serie, ciężary)</button>
+    <button class="secondary block" data-action="ex-list">Tylko lista ćwiczeń</button>
+    <p class="muted small">Plik z wynikami da się wczytać z powrotem (Ustawienia → Wczytaj trening).
+      Sama lista to plan do wysłania komuś - bez serii.</p>`);
+  sheetEl.onclick = (ev) => {
+    const a = ev.target.closest('[data-action]')?.dataset.action;
+    if (a === 'ex-back') onBack();
+    else if (a === 'ex-full') shareFile(formatWorkouts(store.exportDays([date])), `trening-${date}.txt`);
+    else if (a === 'ex-list') shareFile(formatExerciseList(store.exportDays([date])), `cwiczenia-${date}.txt`, 'text/plain', 'Lista ćwiczeń');
+  };
 }
 
 export function startImport(target) {
