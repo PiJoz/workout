@@ -226,8 +226,9 @@ export function parseWorkouts(text) {
 
   // Ćwiczenie bez serii odpada; typ z nagłówka albo rozpoznany z serii; serie - tylko pola typu.
   const finish = (entries) => {
-    for (const e of entries.filter((x) => !x.sets.length)) warnings.push(`„${e.exercise.name}”: brak serii - pominięte`);
-    const kept = entries.filter((x) => x.sets.length);
+    // Bez serii: zaplanowane ćwiczenie (typ z nagłówka) zostaje; bez typu nie ma z czego go rozpoznać.
+    for (const e of entries.filter((x) => !x.sets.length && !x.exercise.type)) warnings.push(`„${e.exercise.name}”: brak serii - pominięte`);
+    const kept = entries.filter((x) => x.sets.length || x.exercise.type);
     for (const e of kept) {
       if (!e.exercise.type) e.exercise.type = inferType(e.sets);
       const fields = TYPES[e.exercise.type].fields;

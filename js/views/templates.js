@@ -43,18 +43,24 @@ export function templateSheet(id, back = '') {
   const body = sheetEl.querySelector('.sheet-body');
   const draw = () => {
     const there = store.getDay(st.date).length;
+    // To, co naprawdę trafi do dnia "z seriami": ostatnie wykonanie przed tym dniem albo szablon.
+    const shown = t.entries.map((e) => ({ ...e, last: store.lastSets(e.exerciseId, st.date) }))
+      .map((e) => ({ ...e, sets: e.last ? e.last.sets : e.sets }));
     body.innerHTML = `${sheetHeader(t.name, back)}
-      <p class="muted center">${templateSummary(t)}${t.from ? ` · z ${h(shortDate(t.from))}` : ''}</p>
-      <ul class="copy-list">${t.entries.map((e) => {
-        const ex = store.getExercise(e.exerciseId);
-        return ex ? `<li><span>${catDot(ex.category)} <strong>${h(ex.name)}</strong><br>
-          <small class="muted">${e.sets.map((s) => h(formatSet(s, ex.type))).join(', ')}</small></span></li>` : '';
+      <p class="muted center">${templateSummary({ entries: shown })}${t.from ? ` · z ${h(shortDate(t.from))}` : ''}</p>
+      <ul class="copy-list">${shown.map(({ exerciseId, last, sets }) => {
+        const ex = store.getExercise(exerciseId);
+        if (!ex) return '';
+        return `<li><span>${catDot(ex.category)} <strong>${h(ex.name)}</strong><br>
+          <small class="muted">${sets.map((s) => h(formatSet(s, ex.type))).join(', ')}
+          · ${last ? `ostatnio ${h(shortDate(last.date))}` : 'z gotowego treningu'}</small></span></li>`;
       }).join('')}</ul>
       <label class="setting"><span>Wstaw do dnia</span><input type="date" id="tpl-date" value="${st.date}"></label>
       <p class="muted small">${h(longDate(st.date))}: ${there
         ? `jest już ${plural(there, FORMS.exercise)} - gotowy trening zostanie dopisany.`
-        : 'pusty dzień.'} Serie możesz potem zmienić.</p>
-      <button class="primary block" data-action="tpl-apply">Wstaw trening</button>
+        : 'pusty dzień.'} Serie z ostatniego wykonania każdego ćwiczenia przed tym dniem - możesz je potem zmienić.</p>
+      <button class="primary block" data-action="tpl-apply-last">Wstaw z seriami</button>
+      <button class="secondary block" data-action="tpl-apply-none">Wstaw bez serii</button>
       <div class="row">
         <button class="secondary" data-action="tpl-rename">Zmień nazwę</button>
         <button class="danger" data-action="tpl-delete">Usuń</button>
@@ -68,9 +74,9 @@ export function templateSheet(id, back = '') {
   };
   sheetEl.onclick = (ev) => {
     const a = ev.target.closest('[data-action]')?.dataset.action;
-    if (a === 'tpl-apply') {
+    if (a === 'tpl-apply-last' || a === 'tpl-apply-none') {
       const before = store.snapshotDays([st.date]);
-      const n = store.applyTemplate(id, st.date);
+      const n = store.applyTemplate(id, st.date, a === 'tpl-apply-none' ? 'none' : 'last');
       ui.date = st.date;
       closeSheet();
       go('day');

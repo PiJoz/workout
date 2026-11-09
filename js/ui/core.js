@@ -90,10 +90,35 @@ export function catDot(catId) {
   return `<span class="dot" style="background:${c ? c.color : '#888'}"></span>`;
 }
 
+// Klawiatura: okno kończy się nad nią, a wiersz z kursorem jest widoczny. Telefon zmniejsza ekran
+// (APK, Chrome z interactive-widget=resizes-content) albo tylko widoczną część (Safari) - liczymy z
+// visualViewport, który mówi o obu. --kb: ile klawiatura zasłania od dołu; --sheet-max: wysokość okna.
+export function keepFocusVisible() {
+  const el = document.activeElement;
+  if (sheetEl.hidden || !el || !sheetEl.contains(el) || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
+  // Najpierw przycisk do następnego kroku (np. "+ Dodaj serię"), potem pole: pole wygrywa, gdy brak miejsca.
+  sheetEl.querySelector('[data-keep-with-focus]')?.scrollIntoView({ block: 'nearest' });
+  (el.closest('.set-row, label') || el).scrollIntoView({ block: 'nearest' });
+}
+
+function fitSheetToScreen() {
+  const vv = window.visualViewport;
+  const visible = vv ? vv.height : innerHeight;
+  const covered = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0;
+  sheetEl.style.setProperty('--kb', `${covered}px`);
+  sheetEl.style.setProperty('--sheet-max', `${Math.round(visible * 0.92)}px`);
+  // Po zmianie rozmiaru, gdy przeglądarka już ułożyła okno na nowo.
+  requestAnimationFrame(keepFocusVisible);
+}
+window.visualViewport?.addEventListener('resize', fitSheetToScreen);
+window.visualViewport?.addEventListener('scroll', fitSheetToScreen);
+window.addEventListener('resize', fitSheetToScreen);
+
 export function openSheet(html) {
   sheetEl.onclick = null; // handler poprzedniego arkusza nie może przeżyć jego zamknięcia
   sheetEl.innerHTML = `<div class="sheet-backdrop" data-action="close-sheet"></div><div class="sheet-body" role="dialog" aria-modal="true">${html}</div>`;
   sheetEl.hidden = false;
+  fitSheetToScreen();
   document.body.classList.add('no-scroll');
   const first = sheetEl.querySelector('[autofocus]');
   if (first) first.focus();

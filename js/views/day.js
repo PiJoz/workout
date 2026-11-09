@@ -4,7 +4,7 @@ import { CATEGORIES, categoryById, TYPES } from '../data.js';
 import * as store from '../store.js';
 import { fromDisplay, toDisplay, WEIGHT_STEP } from '../units.js';
 import { escapeHtml as h, formatNum, FORMS, longDate, parseNum, plural, stepValue, todayKey } from '../util.js';
-import { $, catDot, closeSheet, formatSet, openSheet, render, sheetEl, sheetHeader, toast, ui, units, viewEl } from '../ui/core.js';
+import { $, catDot, closeSheet, formatSet, keepFocusVisible, openSheet, render, sheetEl, sheetHeader, toast, ui, units, viewEl } from '../ui/core.js';
 import { pickType } from '../views/exercises.js';
 import { guideButton, ICON_GUIDE, showGuide } from '../views/guide.js';
 
@@ -55,7 +55,8 @@ export function entryCard(e) {
         <span class="muted small">${h(cat.name)}</span>
         ${guideButton(ex)}
       </div>
-      <ol class="sets">${e.sets.map((s) => `<li>${h(formatSet(s, ex.type))}</li>`).join('')}</ol>
+      ${e.sets.length ? `<ol class="sets">${e.sets.map((s) => `<li>${h(formatSet(s, ex.type))}</li>`).join('')}</ol>`
+        : '<p class="muted small">Brak serii - stuknij, żeby wpisać.</p>'}
     </article>`;
 }
 
@@ -275,8 +276,8 @@ export function editEntry(entry) {
     ${savedAs && savedAs.id !== ex.id ? `<p class="warning">Po zapisaniu ten wpis przejdzie z „${h(savedAs.name)}” do „${h(ex.name)}”.</p>` : ''}
     <form id="entry-form" class="form">
       <ul class="set-list set-header">${setHead(ex.type)}</ul>
-      <ol class="set-list" id="set-list">${entry.sets.map((s, i) => setRow(s, ex.type, i)).join('')}</ol>
-      <button type="button" class="secondary block" data-action="add-set">+ Dodaj serię</button>
+      <ol class="set-list" id="set-list">${(entry.sets.length ? entry.sets : [{}]).map((s, i) => setRow(s, ex.type, i)).join('')}</ol>
+      <button type="button" class="secondary block" data-action="add-set" data-keep-with-focus>+ Dodaj serię</button>
       <p class="error" id="entry-error" hidden></p>
       <button class="primary block" type="submit">Zapisz</button>
       ${isNew ? '' : '<button type="button" class="danger block" data-action="del-entry">Usuń ćwiczenie z treningu</button>'}
@@ -295,6 +296,7 @@ export function editEntry(entry) {
       list.insertAdjacentHTML('beforeend', setRow(last, ex.type, list.children.length));
       const inputs = list.lastElementChild.querySelectorAll('input');
       inputs[inputs.length - 1].focus();
+      keepFocusVisible(); // klawiatura już otwarta: nowa seria od razu nad nią
     } else if (btn.dataset.action === 'editor-change-type') {
       // Wpisane wartości przechodzą do nowego typu tam, gdzie pola się pokrywają (np. ciężar).
       const draft = { ...entry, sets: readSets(ex.type).sets };
@@ -338,5 +340,5 @@ export function editEntry(entry) {
     render();
   });
   const firstInput = list.querySelector('input');
-  if (firstInput && isNew) firstInput.focus();
+  if (firstInput && (isNew || !entry.sets.length)) firstInput.focus();
 }

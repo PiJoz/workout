@@ -196,7 +196,8 @@ export function swapExercise(date, entryId, exerciseId) {
   const sets = entry.sets
     .map((set) => Object.fromEntries(Object.entries(set).filter(([k]) => fields.includes(k))))
     .filter((set) => Object.keys(set).length);
-  state.workouts[date] = day.map((e) => (e === entry ? { ...e, exerciseId, sets: sets.length ? sets : [{}] } : e));
+  const keep = sets.length || !entry.sets.length ? sets : [{}]; // zaplanowane (bez serii) zostaje bez serii
+  state.workouts[date] = day.map((e) => (e === entry ? { ...e, exerciseId, sets: keep } : e));
   save();
 }
 
@@ -322,10 +323,26 @@ export function restoreTemplate({ template, index }) {
   save();
 }
 
-export function applyTemplate(id, date) {
+// Ostatnie wykonanie ćwiczenia przed danym dniem (wg kalendarza, ten dzień się nie liczy): { date, sets }
+// albo null. Ćwiczenie zaplanowane bez serii się nie liczy. Serie to kopie.
+export function lastSets(exerciseId, beforeDate) {
+  const days = datesWithWorkouts().filter((d) => d < beforeDate);
+  for (let i = days.length - 1; i >= 0; i--) {
+    const found = getDay(days[i]).filter((e) => e.exerciseId === exerciseId && e.sets.length).pop();
+    if (found) return { date: days[i], sets: structuredClone(found.sets) };
+  }
+  return null;
+}
+
+// sets: 'last' - serie z ostatniego wcześniejszego wykonania każdego ćwiczenia (bez historii: z szablonu);
+// 'none' - same ćwiczenia, serie do wpisania.
+export function applyTemplate(id, date, sets = 'last') {
   const t = state.templates.find((x) => x.id === id);
   if (!t) throw new Error('Nie ma takiego treningu.');
-  return appendEntries(date, t.entries);
+  return appendEntries(date, t.entries.map((e) => ({
+    exerciseId: e.exerciseId,
+    sets: sets === 'none' ? [] : lastSets(e.exerciseId, date)?.sets ?? e.sets,
+  })));
 }
 
 // Dni w postaci gotowej do eksportu .txt.
@@ -429,7 +446,8 @@ function daySignature(date) {
 // pliku - Garmin miałby dwie wersje); removed: wysłane, a potem usunięte albo przeniesione.
 export function garminStatus() {
   const { sent } = state.garmin;
-  const days = datesWithWorkouts();
+  // Dzień z samymi zaplanowanymi ćwiczeniami (bez serii) to jeszcze nie trening - nie do Garmina.
+  const days = datesWithWorkouts().filter((d) => getDay(d).some((e) => e.sets.length));
   return {
     unsent: days.filter((d) => !sent[d]),
     changed: days.filter((d) => sent[d] && sent[d].sig !== daySignature(d)),

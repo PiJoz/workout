@@ -179,7 +179,7 @@ a.secondary { display: block; text-align: center; text-decoration: none; color: 
 #sheet { position: fixed; inset: 0; z-index: 20; }
 .sheet-backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / .45); }
 .sheet-body {
-  position: absolute; left: 0; right: 0; bottom: 0; max-height: 92vh; overflow-y: auto;
+  position: absolute; left: 0; right: 0; bottom: var(--kb, 0px); max-height: var(--sheet-max, 92vh); overflow-y: auto;
   background: var(--surface); border-radius: 18px 18px 0 0;
   padding: 8px 16px calc(20px + env(safe-area-inset-bottom));
   max-width: 640px; margin: 0 auto; animation: up .18s ease-out;
