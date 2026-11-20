@@ -1,11 +1,11 @@
 // Najpierw sieć, potem pamięć podręczna: online zawsze najnowsza wersja,
 // offline ostatnia zapisana.
-const CACHE = 'workout-v7';
+const CACHE = 'workout-v8';
 const SHELL = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest', 'icon.svg',
   'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png',
   'js/app.js', 'js/data.js', 'js/store.js', 'js/txt.js', 'js/util.js', 'js/stats.js', 'js/charts.js', 'js/units.js', 'js/csv.js', 'js/guides.js', 'js/guide-images.js', 'js/fit.js', 'js/privacy.js',
-  'js/ui/core.js', 'js/ui/files.js', 'js/ui/hold.js', 'js/views/calendar.js', 'js/views/day.js', 'js/views/exercises.js', 'js/views/guide.js', 'js/views/progress.js', 'js/views/settings.js', 'js/views/templates.js',
+  'js/ui/core.js', 'js/ui/files.js', 'js/ui/hold.js', 'js/views/calendar.js', 'js/views/day.js', 'js/views/exercises.js', 'js/views/guide.js', 'js/views/history.js', 'js/views/progress.js', 'js/views/settings.js', 'js/views/templates.js',
 ];
 
 self.addEventListener('install', (e) => {

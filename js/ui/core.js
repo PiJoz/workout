@@ -115,6 +115,7 @@ window.visualViewport?.addEventListener('scroll', fitSheetToScreen);
 window.addEventListener('resize', fitSheetToScreen);
 
 export function openSheet(html) {
+  sheetEl.beforeClose = null; // ochrona poprzedniego okna nie przechodzi na następne
   sheetEl.onclick = null; // handler poprzedniego arkusza nie może przeżyć jego zamknięcia
   sheetEl.innerHTML = `<div class="sheet-backdrop" data-action="close-sheet"></div><div class="sheet-body" role="dialog" aria-modal="true">${html}</div>`;
   sheetEl.hidden = false;
@@ -125,12 +126,20 @@ export function openSheet(html) {
   syncBackGuard();
 }
 
+// Okno może nie dać się zamknąć (np. niezapisane serie): sheetEl.beforeClose() zwraca false.
+// Dotyczy X, gestu "wstecz" i kliknięcia obok okna - wszystkie idą tędy.
 export function closeSheet() {
+  if (!sheetEl.hidden && sheetEl.beforeClose?.() === false) {
+    syncBackGuard(); // "wstecz" zdjęło już strażnika historii, a okno zostaje - strażnik wraca
+    return false;
+  }
+  sheetEl.beforeClose = null;
   sheetEl.hidden = true;
   sheetEl.onclick = null;
   sheetEl.innerHTML = '';
   document.body.classList.remove('no-scroll');
   syncBackGuard();
+  return true;
 }
 
 export function sheetHeader(title, back) {

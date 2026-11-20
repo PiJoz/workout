@@ -168,10 +168,12 @@ export function datesWithWorkouts() {
 export function saveEntry(date, entry) {
   const day = [...getDay(date)];
   const i = day.findIndex((e) => e.id === entry.id);
-  if (i >= 0) day[i] = entry;
-  else day.push({ ...entry, id: entry.id || uid() });
+  const saved = i >= 0 ? entry : { ...entry, id: entry.id || uid() };
+  if (i >= 0) day[i] = saved;
+  else day.push(saved);
   state.workouts[date] = day;
   save();
+  return saved.id; // edycja, która zostaje otwarta, zapisuje potem to samo ćwiczenie
 }
 
 export function deleteEntry(date, entryId) {

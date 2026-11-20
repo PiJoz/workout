@@ -112,6 +112,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .check .muted { display: block; margin-top: 4px; }
 .privacy h3 { margin: 16px 0 4px; font-size: 1rem; }
 .privacy p { margin: 4px 0; }
+/* "Zapisz" w edycji serii: zielony = zapisane, niebieski (.primary) = niezapisane zmiany */
+.save-btn { transition: background-color .15s; }
+.save-btn.saved { background: #16a34a; border-color: #16a34a; color: #fff; }
+.history-list { list-style: none; padding: 0; margin: 8px 0; }
+.history-list li { display: grid; grid-template-columns: 4.5em 1fr; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border); }
 .warning { background: var(--warn-bg); color: var(--warn-text); border-radius: 10px; padding: 10px 12px; font-size: .9rem; margin: 12px 0; }
 .row { display: flex; gap: 8px; }
 .row > * { flex: 1; }
@@ -151,9 +156,10 @@ body.drag-active { user-select: none; -webkit-user-select: none; cursor: grabbin
 .entry-head { display: flex; align-items: flex-start; gap: 8px; }
 .entry-head h3 { flex: 1; min-width: 0; }
 .entry-head .muted { padding-top: 2px; }
-/* przycisk instrukcji w prawym górnym rogu karty */
+/* przyciski instrukcji i historii w prawym górnym rogu karty, jeden pod drugim */
+.entry-tools { flex: none; display: flex; flex-direction: column; gap: 2px; margin: -6px -6px 0 0; }
 .guide-btn {
-  flex: none; width: 32px; height: 32px; margin: -6px -6px 0 0; border-radius: 50%;
+  flex: none; width: 32px; height: 32px; margin: 0; border-radius: 50%;
   border: none; background: transparent; color: var(--accent); display: grid; place-items: center; padding: 0;
 }
 .guide-btn:active { background: var(--bg); }

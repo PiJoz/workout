@@ -12,6 +12,7 @@ import { copyFromCalendar, renderCalendar, shiftMonth } from './views/calendar.j
 import { editEntry, pickCategory, pickExercise, renderDay } from './views/day.js';
 import { customForm, pickType, renderExercises } from './views/exercises.js';
 import { showGuide } from './views/guide.js';
+import { showHistory } from './views/history.js';
 import { renderExerciseProgress, renderProgress } from './views/progress.js';
 import { garminExport, garminMarkAll, renderSettings, showPrivacy } from './views/settings.js';
 import { pickTemplate, templateSheet } from './views/templates.js';
@@ -67,6 +68,7 @@ document.addEventListener('click', (ev) => {
     case 'copy-from-cal': return copyFromCalendar();
     case 'export-day': return exportDaySheet(ui.date);
     case 'guide': return showGuide(store.getExercise(btn.dataset.id));
+    case 'history': return showHistory(store.getExercise(btn.dataset.id));
     case 'this-month': ui.month = todayKey().slice(0, 7); ui.calSel = null; return render();
     case 'cal-day':
       // Pierwsze stuknięcie: podgląd pod kalendarzem; drugie w ten sam dzień: otwórz dzień.

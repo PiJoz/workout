@@ -126,6 +126,7 @@ export function dayActions(date) {
       body.innerHTML = `${sheetHeader(longDate(date))}
         <p class="muted center">${summary}</p>
         <ul class="cal-day-list">${names}</ul>
+        ${date === todayKey() ? '' : '<button class="secondary block" data-action="dm-copy-today">Kopiuj na dziś</button>'}
         <button class="secondary block" data-action="dm-export">Eksportuj trening</button>
         <button class="secondary block" data-action="dm-template">Zapisz jako gotowy trening</button>
         <button class="secondary block" data-action="dm-move">Przenieś na inny dzień</button>
@@ -155,6 +156,16 @@ export function dayActions(date) {
     const a = btn.dataset.action;
     if (a === 'dm-template') {
       templateNameForm({ date });
+    } else if (a === 'dm-copy-today') {
+      const today = todayKey();
+      const before = store.snapshotDays([today]);
+      const n = store.copyDay(date, today, store.getDay(date).map((e) => e.id));
+      closeSheet();
+      render();
+      toast(`Skopiowano na dziś: ${plural(n, FORMS.exercise)}`, {
+        action: 'Cofnij',
+        onAction: () => { store.replaceDays(before); render(); toast('Cofnięto kopiowanie'); },
+      });
     } else if (a === 'dm-export') {
       exportDaySheet(date, () => dayActions(date)); // ten sam eksport co z ekranu dnia; "wstecz" - to menu
     } else if (a === 'dm-menu' || a === 'dm-delete' || a === 'dm-move') {

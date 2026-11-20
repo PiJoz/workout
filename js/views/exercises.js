@@ -6,6 +6,7 @@ import { escapeHtml as h, plural } from '../util.js';
 import { $, catDot, closeSheet, openSheet, render, sheetEl, sheetHeader, toast, ui, viewEl } from '../ui/core.js';
 import { editEntry } from '../views/day.js';
 import { guideButton } from '../views/guide.js';
+import { historyButton } from '../views/history.js';
 import { TEMPLATE_HINT, templateList } from '../views/templates.js';
 
 // existing: własne ćwiczenie do edycji (nazwa, partia); bez niego formularz dodaje nowe.
@@ -103,7 +104,7 @@ export function renderExercises() {
         <ul class="ex-manage">${list.map((e) => `<li>
           <span>${h(e.name)}${e.custom ? ' <em class="tag">własne</em>' : ''}<br><small class="muted">${h(TYPES[e.type].name)}</small></span>
           <span class="ex-actions">
-            ${guideButton(e, 'icon small svg')}
+            ${guideButton(e, 'icon small svg')}${historyButton(e, 'icon small svg')}
             <button class="icon small svg" data-action="list-change-type" data-id="${e.id}" aria-label="Zmień typ: ${h(e.name)}">${ICON_TYPE}</button>
             ${e.custom ? `<button class="icon small svg" data-action="edit-custom" data-id="${e.id}" aria-label="Edytuj ${h(e.name)}">${ICON_EDIT}</button>
             <button class="icon small svg" data-action="del-custom" data-id="${e.id}" aria-label="Usuń ${h(e.name)}">${ICON_TRASH}</button>` : ''}

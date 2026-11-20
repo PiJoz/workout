@@ -7,6 +7,7 @@ import { escapeHtml as h, formatNum, FORMS, longDate, parseNum, plural, stepValu
 import { $, catDot, closeSheet, formatSet, keepFocusVisible, openSheet, render, sheetEl, sheetHeader, toast, ui, units, viewEl } from '../ui/core.js';
 import { pickType } from '../views/exercises.js';
 import { guideButton, ICON_GUIDE, showGuide } from '../views/guide.js';
+import { historyButton, ICON_HISTORY, showHistory } from '../views/history.js';
 
 export function renderDay() {
   const entries = store.getDay(ui.date);
@@ -53,7 +54,7 @@ export function entryCard(e) {
       <div class="entry-head">
         <h3>${h(ex.name)}</h3>
         <span class="muted small">${h(cat.name)}</span>
-        ${guideButton(ex)}
+        <div class="entry-tools">${guideButton(ex)}${historyButton(ex)}</div>
       </div>
       ${e.sets.length ? `<ol class="sets">${e.sets.map((s) => `<li>${h(formatSet(s, ex.type))}</li>`).join('')}</ol>`
         : '<p class="muted small">Brak serii - stuknij, żeby wpisać.</p>'}
@@ -224,14 +225,15 @@ export function stepper(f, shown, mode, orig) {
     <button type="button" data-action="step" data-d="1" aria-label="Dodaj ${what}">+</button></span>`;
 }
 
-export function readSets(type) {
+// mark: false - sam odczyt (np. czy są niezapisane zmiany), bez podświetlania błędnych serii.
+export function readSets(type, { mark = true } = {}) {
   const fields = TYPES[type].fields;
   const u = units();
   const sets = [];
   let bad = false;
   // Tylko lista serii - nagłówek kolumn też ma klasę .set-row (wspólna siatka), ale nie ma pól.
   sheetEl.querySelectorAll('#set-list .set-row').forEach((row) => {
-    row.classList.remove('invalid');
+    if (mark) row.classList.remove('invalid');
     const set = {};
     let any = false;
     let rowBad = false;
@@ -257,13 +259,15 @@ export function readSets(type) {
         any = true;
       }
     }
-    if (rowBad) { row.classList.add('invalid'); bad = true; }
+    if (rowBad) { if (mark) row.classList.add('invalid'); bad = true; }
     if (any) sets.push(set);
   });
   return { sets, bad };
 }
 
-export function editEntry(entry) {
+// saved: zapisany stan ([ćwiczenie, serie] jako JSON) przy powrocie do edycji z instrukcji, historii
+// albo zmiany typu - wtedy wpisane, a niezapisane serie dalej świecą się jako niezapisane.
+export function editEntry(entry, { saved } = {}) {
   const ex = store.getExercise(entry.exerciseId);
   const cat = categoryById(ex.category);
   const isNew = !entry.id;
@@ -272,20 +276,34 @@ export function editEntry(entry) {
   openSheet(`${sheetHeader(ex.name, isNew ? `back-cat:${ex.category}` : null)}
     <p class="type-line center"><span class="muted">${h(cat.name)} · ${h(TYPES[ex.type].name)}</span>
       <button type="button" class="link" data-action="editor-change-type">Zmień typ</button>
-      <button type="button" class="link" data-action="editor-guide">${ICON_GUIDE} Instrukcja</button></p>
+      <button type="button" class="link" data-action="editor-guide">${ICON_GUIDE} Instrukcja</button>
+      <button type="button" class="link" data-action="editor-history">${ICON_HISTORY} Historia</button></p>
     ${savedAs && savedAs.id !== ex.id ? `<p class="warning">Po zapisaniu ten wpis przejdzie z „${h(savedAs.name)}” do „${h(ex.name)}”.</p>` : ''}
     <form id="entry-form" class="form">
       <ul class="set-list set-header">${setHead(ex.type)}</ul>
       <ol class="set-list" id="set-list">${(entry.sets.length ? entry.sets : [{}]).map((s, i) => setRow(s, ex.type, i)).join('')}</ol>
       <button type="button" class="secondary block" data-action="add-set" data-keep-with-focus>+ Dodaj serię</button>
       <p class="error" id="entry-error" hidden></p>
-      <button class="primary block" type="submit">Zapisz</button>
-      ${isNew ? '' : '<button type="button" class="danger block" data-action="del-entry">Usuń ćwiczenie z treningu</button>'}
+      <button class="primary block save-btn" type="submit">Zapisz</button>
+      <button type="button" class="danger block" data-action="del-entry" ${isNew ? 'hidden' : ''}>Usuń ćwiczenie z treningu</button>
     </form>`);
 
   const list = $('#set-list');
   const renumber = () => list.querySelectorAll('.set-no').forEach((el, i) => { el.textContent = i + 1; });
   const err = (msg) => { const el = $('#entry-error'); el.textContent = msg; el.hidden = !msg; };
+  // "Zapisz" nie zamyka okna: zielony = to, co widać, jest zapisane; niebieski = są niezapisane zmiany.
+  // Zamknąć (X, gest "wstecz") bez pytania można, gdy nic by nie przepadło.
+  const snapshot = () => JSON.stringify([ex.id, readSets(ex.type, { mark: false }).sets]);
+  let savedState = saved !== undefined ? saved : isNew ? null : snapshot();
+  const empty = JSON.stringify([ex.id, []]);
+  const saveBtn = sheetEl.querySelector('.save-btn');
+  const showState = () => {
+    const clean = savedState !== null && snapshot() === savedState;
+    saveBtn.classList.toggle('saved', clean);
+    saveBtn.textContent = clean ? '✓ Zapisano' : 'Zapisz';
+  };
+  sheetEl.beforeClose = () => snapshot() === (savedState ?? empty) || confirm('Serie nie są zapisane. Zamknąć bez zapisywania?');
+  $('#entry-form').addEventListener('input', showState);
 
   sheetEl.onclick = (ev) => {
     const btn = ev.target.closest('[data-action]');
@@ -297,32 +315,40 @@ export function editEntry(entry) {
       const inputs = list.lastElementChild.querySelectorAll('input');
       inputs[inputs.length - 1].focus();
       keepFocusVisible(); // klawiatura już otwarta: nowa seria od razu nad nią
+      showState();
     } else if (btn.dataset.action === 'editor-change-type') {
       // Wpisane wartości przechodzą do nowego typu tam, gdzie pola się pokrywają (np. ciężar).
-      const draft = { ...entry, sets: readSets(ex.type).sets };
+      const draft = { ...entry, sets: readSets(ex.type, { mark: false }).sets };
       if (!draft.sets.length) draft.sets = [{}];
       pickType(ex, {
         onPick: (v, created) => {
           if (created) toast(`Dodano do spisu: „${v.name}”`);
-          editEntry({ ...draft, exerciseId: v.id });
+          editEntry({ ...draft, exerciseId: v.id }, { saved: savedState });
         },
-        onBack: () => editEntry(draft),
+        onBack: () => editEntry(draft, { saved: savedState }),
       });
     } else if (btn.dataset.action === 'editor-guide') {
-      const draft = { ...entry, sets: readSets(ex.type).sets }; // wpisane wartości czekają na powrót
+      const draft = { ...entry, sets: readSets(ex.type, { mark: false }).sets }; // wpisane wartości czekają na powrót
       if (!draft.sets.length) draft.sets = [{}];
-      showGuide(ex, () => editEntry(draft));
+      showGuide(ex, () => editEntry(draft, { saved: savedState }));
+    } else if (btn.dataset.action === 'editor-history') {
+      const draft = { ...entry, sets: readSets(ex.type, { mark: false }).sets };
+      if (!draft.sets.length) draft.sets = [{}];
+      showHistory(ex, () => editEntry(draft, { saved: savedState }));
     } else if (btn.dataset.action === 'step') {
       const input = btn.parentElement.querySelector('input');
       const step = input.dataset.f === 'weight' ? WEIGHT_STEP[units().weight] : 1;
       input.value = stepValue(input.value, Number(btn.dataset.d) * step);
       btn.closest('.set-row').classList.remove('invalid');
+      showState();
     } else if (btn.dataset.action === 'del-set') {
       btn.closest('li').remove();
       renumber();
+      showState();
     } else if (btn.dataset.action === 'del-entry') {
       if (confirm(`Usunąć „${ex.name}” z tego dnia?`)) {
         store.deleteEntry(ui.date, entry.id);
+        sheetEl.beforeClose = null;
         closeSheet();
         render();
       }
@@ -335,10 +361,15 @@ export function editEntry(entry) {
     if (bad) return err('Popraw zaznaczone serie (liczby; sekundy 0–59).');
     if (!sets.length) return err('Wpisz co najmniej jedną serię.');
     // Pola notatki już nie ma; notatka z wcześniej lub z pliku .txt zostaje w danych bez zmian.
-    store.saveEntry(ui.date, { id: entry.id, exerciseId: ex.id, sets, note: entry.note || '' });
-    closeSheet();
-    render();
+    err('');
+    entry.id = store.saveEntry(ui.date, { id: entry.id, exerciseId: ex.id, sets, note: entry.note || '' });
+    savedState = snapshot();
+    showState();
+    sheetEl.querySelector('.warning')?.remove(); // "po zapisaniu przejdzie z ... do ..." - już przeszło
+    sheetEl.querySelector('[data-action=del-entry]').hidden = false;
+    render(); // karta pod oknem pokazuje zapisane serie
   });
+  showState();
   const firstInput = list.querySelector('input');
   if (firstInput && (isNew || !entry.sets.length)) firstInput.focus();
 }
