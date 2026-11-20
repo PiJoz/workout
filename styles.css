@@ -335,9 +335,8 @@ nav button.active { color: var(--accent); font-weight: 700; }
 
 #toast { display: flex; align-items: center; gap: 12px; }
 #toast[hidden] { display: none; }
-/* Komunikat leży nad oknami: dotyk przechodzi do okna pod nim, klikalny jest tylko przycisk (np. Cofnij). */
+/* Komunikat leży nad oknami: dotyk przechodzi do okna pod nim. */
 #toast { pointer-events: none; }
-.toast-action { background: none; border: none; color: var(--accent); font-weight: 700; padding: 4px 6px; flex: none; pointer-events: auto; }
 #toast {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));
   background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 30;

@@ -108,7 +108,7 @@ export function garminNote(date) {
     : `<p class="garmin-mark small">✓ Wysłany do Garmin Connect ${h(shortDate(m.at))}</p>`;
 }
 
-// Usunięcie wymaga potwierdzenia (bez cofania); przeniesienie i kopiowanie mają "Cofnij" (kopia dni sprzed).
+// Bez okienek z "Cofnij": usunięcie i nadpisanie mają potwierdzenie, że to ostateczne.
 
 export function dayActions(date) {
   const entries = store.getDay(date);
@@ -139,7 +139,7 @@ export function dayActions(date) {
           Co zrobić z treningiem z ${h(shortDate(date))}?</p>
         <button class="primary block" data-action="dm-copy-append">Dodaj do istniejącego</button>
         <button class="danger block" data-action="dm-copy-replace">Nadpisz dzisiejszy trening</button>
-        <p class="muted small">Nadpisanie usuwa dzisiejsze ćwiczenia - zaraz po nim możesz to cofnąć.</p>`;
+        <p class="muted small">Nadpisanie usuwa dzisiejsze ćwiczenia - tego nie da się cofnąć.</p>`;
     } else if (st.view === 'delete') {
       body.innerHTML = `${sheetHeader('Usunąć trening?', 'dm-menu')}
         <p>Trening z <strong>${h(longDate(date))}</strong> (${summary}) zostanie usunięty. Tego nie da się cofnąć.</p>
@@ -173,16 +173,10 @@ export function dayActions(date) {
         draw();
         return;
       }
-      const replace = a === 'dm-copy-replace';
-      const before = store.snapshotDays([today]);
-      const n = store.copyDay(date, today, store.getDay(date).map((e) => e.id), { replace });
+      // Bez okienka z "Cofnij" (trudno je było zamknąć): wynik widać od razu w kalendarzu.
+      store.copyDay(date, today, store.getDay(date).map((e) => e.id), { replace: a === 'dm-copy-replace' });
       closeSheet();
       render();
-      const what = a === 'dm-copy-today' ? 'Skopiowano na dziś' : replace ? 'Zastąpiono dzisiejszy trening' : 'Dopisano do dzisiejszego treningu';
-      toast(`${what}: ${plural(n, FORMS.exercise)}`, {
-        action: 'Cofnij',
-        onAction: () => { store.replaceDays(before); render(); toast('Cofnięto kopiowanie'); },
-      });
     } else if (a === 'dm-export') {
       exportDaySheet(date, () => dayActions(date)); // ten sam eksport co z ekranu dnia; "wstecz" - to menu
     } else if (a === 'dm-menu' || a === 'dm-delete' || a === 'dm-move') {
@@ -202,22 +196,11 @@ export function dayActions(date) {
       render();
     } else if (a === 'dm-move-yes') {
       const to = st.target;
-      const before = store.snapshotDays([date, to]);
-      store.moveDay(date, to);
+      store.moveDay(date, to); // da się przenieść z powrotem tym samym menu
       ui.calSel = to;
       ui.month = to.slice(0, 7);
       closeSheet();
       render();
-      toast(`Przeniesiono trening na ${shortDate(to)}`, {
-        action: 'Cofnij',
-        onAction: () => {
-          store.replaceDays(before);
-          ui.calSel = date;
-          ui.month = date.slice(0, 7);
-          render();
-          toast('Cofnięto przeniesienie');
-        },
-      });
     }
   };
   draw();

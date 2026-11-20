@@ -78,14 +78,10 @@ export function entryActions(entryId) {
     if (a === 'ea-swap') {
       swapPicker(entryId);
     } else if (a === 'ea-delete') {
-      const before = store.snapshotDays([ui.date]);
+      if (!confirm(`Usunąć „${ex.name}” z tego dnia?`)) return; // bez "Cofnij" - pytanie przed
       store.deleteEntry(ui.date, entryId);
       closeSheet();
       render();
-      toast(`Usunięto „${ex.name}”`, {
-        action: 'Cofnij',
-        onAction: () => { store.replaceDays(before); render(); },
-      });
     }
   };
 }
@@ -127,15 +123,14 @@ export function swapPicker(entryId) {
       draw();
     } else if (a === 'swap-pick') {
       const next = store.getExercise(btn.dataset.id);
-      const before = store.snapshotDays([ui.date]);
+      // Ten sam typ: serie zostają, zamiana w drugą stronę przywraca wszystko. Inny typ gubi część
+      // wartości serii - bez "Cofnij" najpierw pytanie.
+      const lossy = next.type !== cur.type && entry.sets.length;
+      if (lossy && !confirm(`Zamienić na „${next.name}”? Inny typ pomiaru - z serii zostaną tylko pasujące pola.`)) return;
       store.swapExercise(ui.date, entryId, next.id);
       render();
       if (next.type !== cur.type) editEntry(structuredClone(store.getDay(ui.date).find((e) => e.id === entryId)));
       else closeSheet();
-      toast(`Zamieniono na „${next.name}”`, {
-        action: 'Cofnij',
-        onAction: () => { store.replaceDays(before); closeSheet(); render(); toast('Cofnięto zamianę'); },
-      });
     }
   };
   draw();

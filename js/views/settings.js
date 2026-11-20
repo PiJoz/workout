@@ -60,15 +60,13 @@ export function garminExport() {
     saved.push(date);
   }
   if (!saved.length) return toast('Nie udało się zapisać plików .fit');
-  const undo = store.markGarminSent(saved);
+  store.markGarminSent(saved);
   render();
+  // Sama informacja, gdzie są pliki - bez "Cofnij"; znika sama po kilku sekundach.
   const files = plural(saved.length, ['plik', 'pliki', 'plików']);
   toast(saved.length < dates.length
     ? `Zapisano ${saved.length} z ${dates.length} plików - reszta czeka na następny raz`
-    : `Zapisano w Pobranych: ${files} .fit`, {
-    action: 'Cofnij',
-    onAction: () => { store.restoreGarminMarks(undo); render(); toast('Treningi znów czekają na wysłanie'); },
-  });
+    : `Zapisano w Pobranych: ${files} .fit`);
 }
 
 export function garminMarkAll() {
@@ -76,12 +74,9 @@ export function garminMarkAll() {
   const dates = [...unsent, ...changed].sort();
   if (!confirm(`Oznaczyć ${plural(dates.length, FORMS.workout)} jako wysłane, bez tworzenia plików? `
     + 'Użyj, jeśli te treningi już są w Garmin Connect.')) return;
-  const undo = store.markGarminSent(dates);
+  store.markGarminSent(dates);
   render();
-  toast(`Oznaczono jako wysłane: ${plural(dates.length, FORMS.workout)}`, {
-    action: 'Cofnij',
-    onAction: () => { store.restoreGarminMarks(undo); render(); },
-  });
+  toast(`Oznaczono jako wysłane: ${plural(dates.length, FORMS.workout)}`);
 }
 
 export function seg(key, options) {

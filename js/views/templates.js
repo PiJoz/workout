@@ -75,25 +75,17 @@ export function templateSheet(id, back = '') {
   sheetEl.onclick = (ev) => {
     const a = ev.target.closest('[data-action]')?.dataset.action;
     if (a === 'tpl-apply-last' || a === 'tpl-apply-none') {
-      const before = store.snapshotDays([st.date]);
-      const n = store.applyTemplate(id, st.date, a === 'tpl-apply-none' ? 'none' : 'last');
+      store.applyTemplate(id, st.date, a === 'tpl-apply-none' ? 'none' : 'last');
       ui.date = st.date;
       closeSheet();
-      go('day');
-      toast(`Wstawiono „${t.name}”: ${plural(n, FORMS.exercise)}`, {
-        action: 'Cofnij',
-        onAction: () => { store.replaceDays(before); render(); toast('Cofnięto wstawienie'); },
-      });
+      go('day'); // wstawione ćwiczenia widać od razu
     } else if (a === 'tpl-rename') {
       templateNameForm({ id, back });
     } else if (a === 'tpl-delete') {
-      const undo = store.deleteTemplate(id);
+      if (!confirm(`Usunąć gotowy trening „${t.name}”? Tego nie da się cofnąć.`)) return;
+      store.deleteTemplate(id);
       closeSheet();
       render();
-      toast(`Usunięto „${t.name}”`, {
-        action: 'Cofnij',
-        onAction: () => { store.restoreTemplate(undo); render(); toast('Przywrócono gotowy trening'); },
-      });
     }
   };
   draw();

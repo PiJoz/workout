@@ -151,19 +151,11 @@ export function sheetHeader(title, back) {
 }
 
 export let toastTimer;
-// action/onAction: przycisk w komunikacie (np. "Cofnij"); taki komunikat wisi dłużej.
-export function toast(msg, { action, onAction } = {}) {
+// Krótka informacja na dole ekranu, znika sama. Bez przycisków (np. "Cofnij") - trudno je było zamknąć.
+export function toast(msg) {
   const el = $('#toast');
   el.textContent = msg;
-  if (action) {
-    const b = Object.assign(document.createElement('button'), { className: 'toast-action', textContent: action, type: 'button' });
-    b.addEventListener('click', () => {
-      el.hidden = true;
-      onAction();
-    });
-    el.append(b);
-  }
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, action ? 7000 : 3500);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
 }
