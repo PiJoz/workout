@@ -266,10 +266,13 @@ function appendEntries(date, entries) {
   return entries.length;
 }
 
-export function copyDay(fromDate, toDate, entryIds) {
+// replace: dzień docelowy najpierw pusty (nadpisanie) - jeden zapis, cofnięcie przez snapshotDays/replaceDays.
+export function copyDay(fromDate, toDate, entryIds, { replace = false } = {}) {
   if (fromDate === toDate) throw new Error('Nie można skopiować dnia na ten sam dzień.');
   const picked = getDay(fromDate).filter((e) => entryIds.includes(e.id));
-  return picked.length ? appendEntries(toDate, picked) : 0;
+  if (!picked.length) return 0;
+  if (replace) state.workouts[toDate] = [];
+  return appendEntries(toDate, picked);
 }
 
 // --- gotowe treningi (szablony): ćwiczenia z seriami do wstawienia w dowolny dzień ---

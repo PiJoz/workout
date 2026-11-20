@@ -131,6 +131,15 @@ export function dayActions(date) {
         <button class="secondary block" data-action="dm-template">Zapisz jako gotowy trening</button>
         <button class="secondary block" data-action="dm-move">Przenieś na inny dzień</button>
         <button class="danger block" data-action="dm-delete">Usuń trening</button>`;
+    } else if (st.view === 'copy') {
+      const today = store.getDay(todayKey());
+      const todaySets = today.reduce((n, e) => n + e.sets.length, 0);
+      body.innerHTML = `${sheetHeader('Kopiuj na dziś', 'dm-menu')}
+        <p>Dziś masz już trening: <strong>${plural(today.length, FORMS.exercise)} · ${plural(todaySets, FORMS.set)}</strong>.
+          Co zrobić z treningiem z ${h(shortDate(date))}?</p>
+        <button class="primary block" data-action="dm-copy-append">Dodaj do istniejącego</button>
+        <button class="danger block" data-action="dm-copy-replace">Nadpisz dzisiejszy trening</button>
+        <p class="muted small">Nadpisanie usuwa dzisiejsze ćwiczenia - zaraz po nim możesz to cofnąć.</p>`;
     } else if (st.view === 'delete') {
       body.innerHTML = `${sheetHeader('Usunąć trening?', 'dm-menu')}
         <p>Trening z <strong>${h(longDate(date))}</strong> (${summary}) zostanie usunięty.</p>
@@ -156,13 +165,21 @@ export function dayActions(date) {
     const a = btn.dataset.action;
     if (a === 'dm-template') {
       templateNameForm({ date });
-    } else if (a === 'dm-copy-today') {
+    } else if (a === 'dm-copy-today' || a === 'dm-copy-append' || a === 'dm-copy-replace') {
+      // Pusty dzień: od razu. Dziś jest już trening: najpierw wybór - dopisać czy nadpisać.
       const today = todayKey();
+      if (a === 'dm-copy-today' && store.getDay(today).length) {
+        st.view = 'copy';
+        draw();
+        return;
+      }
+      const replace = a === 'dm-copy-replace';
       const before = store.snapshotDays([today]);
-      const n = store.copyDay(date, today, store.getDay(date).map((e) => e.id));
+      const n = store.copyDay(date, today, store.getDay(date).map((e) => e.id), { replace });
       closeSheet();
       render();
-      toast(`Skopiowano na dziś: ${plural(n, FORMS.exercise)}`, {
+      const what = a === 'dm-copy-today' ? 'Skopiowano na dziś' : replace ? 'Zastąpiono dzisiejszy trening' : 'Dopisano do dzisiejszego treningu';
+      toast(`${what}: ${plural(n, FORMS.exercise)}`, {
         action: 'Cofnij',
         onAction: () => { store.replaceDays(before); render(); toast('Cofnięto kopiowanie'); },
       });
