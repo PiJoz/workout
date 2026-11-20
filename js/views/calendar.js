@@ -108,7 +108,7 @@ export function garminNote(date) {
     : `<p class="garmin-mark small">✓ Wysłany do Garmin Connect ${h(shortDate(m.at))}</p>`;
 }
 
-// Usunięcie wymaga potwierdzenia, a po każdej operacji komunikat ma "Cofnij" (kopia dni sprzed).
+// Usunięcie wymaga potwierdzenia (bez cofania); przeniesienie i kopiowanie mają "Cofnij" (kopia dni sprzed).
 
 export function dayActions(date) {
   const entries = store.getDay(date);
@@ -142,7 +142,7 @@ export function dayActions(date) {
         <p class="muted small">Nadpisanie usuwa dzisiejsze ćwiczenia - zaraz po nim możesz to cofnąć.</p>`;
     } else if (st.view === 'delete') {
       body.innerHTML = `${sheetHeader('Usunąć trening?', 'dm-menu')}
-        <p>Trening z <strong>${h(longDate(date))}</strong> (${summary}) zostanie usunięty.</p>
+        <p>Trening z <strong>${h(longDate(date))}</strong> (${summary}) zostanie usunięty. Tego nie da się cofnąć.</p>
         <button class="danger block" data-action="dm-delete-yes">Usuń trening</button>
         <button class="secondary block" data-action="dm-menu">Anuluj</button>`;
     } else {
@@ -196,14 +196,10 @@ export function dayActions(date) {
       draw();
       body.querySelector('[data-action=dm-move-yes]')?.scrollIntoView({ block: 'nearest' });
     } else if (a === 'dm-delete-yes') {
-      const before = store.snapshotDays([date]);
+      // Bez komunikatu z "Cofnij" (trudno go było zamknąć) - wystarczy potwierdzenie, które mówi to wprost.
       store.deleteDay(date);
       closeSheet();
       render();
-      toast(`Usunięto trening z ${shortDate(date)}`, {
-        action: 'Cofnij',
-        onAction: () => { store.replaceDays(before); render(); toast('Przywrócono trening'); },
-      });
     } else if (a === 'dm-move-yes') {
       const to = st.target;
       const before = store.snapshotDays([date, to]);
