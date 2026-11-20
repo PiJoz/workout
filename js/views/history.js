@@ -7,7 +7,7 @@ import { escapeHtml as h, plural, shortDate, todayKey } from '../util.js';
 import { formatSet, openSheet, sheetEl, sheetHeader } from '../ui/core.js';
 
 export const ICON_HISTORY = '<svg viewBox="0 0 24 24" aria-hidden="true" class="guide-ico"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 3.5V8h4.5"/><path d="M12 7.5V12l3 2"/></svg>';
-const SHOWN = 30;
+const SHOWN = 5; // tyle ostatnich treningów - żeby od razu widzieć, ile było ostatnio
 
 export function historyButton(ex, cls = 'guide-btn') {
   return `<button class="${cls}" data-action="history" data-id="${ex.id}" aria-label="Historia: ${h(ex.name)}">${ICON_HISTORY}</button>`;
