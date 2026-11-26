@@ -284,6 +284,9 @@ export function editEntry(entry, { saved } = {}) {
     </form>`);
 
   const list = $('#set-list');
+  // +/−: kursor zostaje w polu, w którym był. Inaczej klawiatura się chowa, okno rośnie i przesuwa się
+  // pod palcem - kolejne szybkie stuknięcie trafia w coś innego.
+  list.addEventListener('mousedown', (ev) => { if (ev.target.closest('[data-action=step]')) ev.preventDefault(); });
   const renumber = () => list.querySelectorAll('.set-no').forEach((el, i) => { el.textContent = i + 1; });
   const err = (msg) => { const el = $('#entry-error'); el.textContent = msg; el.hidden = !msg; };
   // "Zapisz" nie zamyka okna: zielony = to, co widać, jest zapisane; niebieski = są niezapisane zmiany.

@@ -96,6 +96,10 @@ export function catDot(catId) {
 export function keepFocusVisible() {
   const el = document.activeElement;
   if (sheetEl.hidden || !el || !sheetEl.contains(el) || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
+  // Nagłówek okna jest przyklejony u góry - pole nie może się pod nim schować.
+  const body = sheetEl.querySelector('.sheet-body');
+  const head = body?.querySelector('.sheet-head');
+  if (head) body.style.scrollPaddingTop = `${head.offsetHeight}px`;
   // Najpierw przycisk do następnego kroku (np. "+ Dodaj serię"), potem pole: pole wygrywa, gdy brak miejsca.
   sheetEl.querySelector('[data-keep-with-focus]')?.scrollIntoView({ block: 'nearest' });
   (el.closest('.set-row, label') || el).scrollIntoView({ block: 'nearest' });
